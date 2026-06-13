@@ -22,6 +22,25 @@ sealed interface AuthState {
     object Authorized : AuthState
 }
 
+// Bottom tab destinations
+enum class DashboardTab {
+    HOME,
+    SECURITY,
+    DEVICES,
+    PERMISSIONS,
+    PROFILE
+}
+
+// Permission configuration structure
+data class SecurityPermission(
+    val id: String,
+    val name: String,
+    val description: String,
+    val systemPermission: String,
+    val isGranted: Boolean,
+    val isCritical: Boolean = true
+)
+
 // Device data structure
 data class TrustedDevice(
     val id: String,
@@ -43,6 +62,53 @@ class MfaViewModel : ViewModel() {
     // Auth screen transitions
     private val _authState = MutableStateFlow<AuthState>(AuthState.LoggedOut)
     val authState: StateFlow<AuthState> = _authState.asStateFlow()
+
+    // Bottom Navigation tab status
+    private val _activeTab = MutableStateFlow(DashboardTab.HOME)
+    val activeTab: StateFlow<DashboardTab> = _activeTab.asStateFlow()
+
+    // Dynamic security assessment status
+    private val _isScanning = MutableStateFlow(false)
+    val isScanning: StateFlow<Boolean> = _isScanning.asStateFlow()
+
+    // Profile settings management
+    private val _profileName = MutableStateFlow("Ergashev")
+    val profileName: StateFlow<String> = _profileName.asStateFlow()
+
+    // State of system permissions needed for secure operations
+    private val _securityPermissions = MutableStateFlow<List<SecurityPermission>>(
+        listOf(
+            SecurityPermission(
+                id = "bio",
+                name = "Biometrik Autentifikatsiya",
+                description = "Tezkor va xavfsiz tizimga kirish uchun barmoq izi yokida yuz tanish sensori",
+                systemPermission = "android.permission.USE_BIOMETRIC",
+                isGranted = true
+            ),
+            SecurityPermission(
+                id = "notif",
+                name = "Muhim Ogohlantirishlar (Push)",
+                description = "Xavfsizlik so'rovlari va noodatiy faollik haqida tezkor bildirishnomalar",
+                systemPermission = "android.permission.POST_NOTIFICATIONS",
+                isGranted = true
+            ),
+            SecurityPermission(
+                id = "camera",
+                name = "Kamera Tizimi (QR-kod)",
+                description = "Ishonchli yangi qurilmalarni QR-kod skanerlash orqali bog'lash",
+                systemPermission = "android.permission.CAMERA",
+                isGranted = false
+            ),
+            SecurityPermission(
+                id = "loc",
+                name = "Geolokatsiya (GPS)",
+                description = "G'ayritabiiy joylardan tizimga urinishlarni aniqlash va bloklash",
+                systemPermission = "android.permission.ACCESS_FINE_LOCATION",
+                isGranted = false
+            )
+        )
+    )
+    val securityPermissions: StateFlow<List<SecurityPermission>> = _securityPermissions.asStateFlow()
 
     // Inputs
     var loginEmail = MutableStateFlow("")
@@ -194,6 +260,53 @@ class MfaViewModel : ViewModel() {
         addLog("$deviceModel qurilmasi ishonchli ro'yxatdan o'chirildi", isSuccess = true)
     }
 
+    // F. Navigation Tab Selection
+    fun changeTab(tab: DashboardTab) {
+        _activeTab.value = tab
+    }
+
+    // G. Toggle App System Permissions (Simulation check)
+    fun togglePermission(id: String) {
+        _securityPermissions.update { list ->
+            list.map { p ->
+                if (p.id == id) {
+                    val nextState = !p.isGranted
+                    addLog("${p.name} ruxsati ${if (nextState) "faollashtirildi" else "o'chirildi"}", isSuccess = nextState)
+                    p.copy(isGranted = nextState)
+                } else p
+            }
+        }
+    }
+
+    // H. Add Simulated Safe trusted device
+    fun addMockDevice() {
+        val models = listOf("MacBook Pro 14\"", "iPad Pro 12.9\"", "Google Pixel 8 Pro", "iPhone 15 Pro Max", "Xiaomi 14 Ultra")
+        val chosen = models.random()
+        val newId = System.currentTimeMillis().toString()
+        _trustedDevices.update { it + TrustedDevice(newId, chosen, "Hozirgina faol") }
+        addLog("Yangi qurilma xavfsiz bog'landi: $chosen", isSuccess = true)
+    }
+
+    // I. Cyber Security System Scan Simulation
+    fun runSecurityScan() {
+        if (_isScanning.value) return
+        viewModelScope.launch {
+            _isScanning.value = true
+            addLog("Tizimli xavfsizlik va shifrlash diagnostikasi boshlandi", isSuccess = true)
+            delay(1500)
+            _isScanning.value = false
+            addLog("Loyihadagi barcha kriptografik algoritmlar va seanslar tekshirildi (XAVFSIZ)", isSuccess = true)
+        }
+    }
+
+    // J. Edit profile details name
+    fun updateProfileName(name: String) {
+        if (name.isNotBlank()) {
+            _profileName.value = name
+            addLog("Foydalanuvchi taxallusi yangilandi: $name", isSuccess = true)
+        }
+    }
+
     // Full Reset
     fun logout() {
         loginEmail.value = ""
@@ -203,6 +316,7 @@ class MfaViewModel : ViewModel() {
         _loginError.value = null
         _otpError.value = null
         _notificationMessage.value = null
+        _activeTab.value = DashboardTab.HOME
         _authState.value = AuthState.LoggedOut
         addLog("Sessiya yopildi / Tizimdan chiqildi")
     }
