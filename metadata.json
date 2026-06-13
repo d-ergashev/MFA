@@ -1,0 +1,6 @@
+{
+  "name": "SecureMFA Demo",
+  "description": "Premium multi-factor authentication (MFA) demonstrator presenting security verification paths (Password, Biometrics, OTP, Push Approvals) in beautiful Uzbek localization.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
