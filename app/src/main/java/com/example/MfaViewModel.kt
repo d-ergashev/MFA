@@ -72,7 +72,7 @@ class MfaViewModel : ViewModel() {
     val isScanning: StateFlow<Boolean> = _isScanning.asStateFlow()
 
     // Profile settings management
-    private val _profileName = MutableStateFlow("Ergashev")
+    private val _profileName = MutableStateFlow("Parizoda")
     val profileName: StateFlow<String> = _profileName.asStateFlow()
 
     // State of system permissions needed for secure operations
