@@ -17,6 +17,9 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
+    - name: Buzuq Gradle faylini tozasiga almashtirish
+      run: wget https://raw.githubusercontent.com/gradle/gradle/master/gradle/wrapper/gradle-wrapper.jar -O gradle/wrapper/gradle-wrapper.jar
+
     - name: Ruxsatlarni to'g'rilash
       run: chmod +x ./gradlew
 
